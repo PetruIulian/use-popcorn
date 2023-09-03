@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const tempMovieData = [
   {
@@ -47,21 +47,62 @@ const tempWatchedData = [
   },
 ];
 
+const KEY = "apikey";
+
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
 export default function App() {
   const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+
+
+  useEffect(() => {
+    async function fetchMovies() {
+      try {
+        setIsLoading(true);
+        setError("");
+        const res = await fetch(`https://www.omdbapi.com/?apikey=${KEY}&s=${query}`);
+
+        if (!res.ok) {
+          throw new Error("Something went wrong");
+        }
+
+        const data = await res.json();
+        if (data.Response === "False") {
+          throw new Error('Movie not found!');
+        }
+
+        setMovies(data.Search);
+      } catch (err) {
+        setError(err.message);
+
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (query.length < 3) {
+      setMovies([]);
+      setError("");
+      return;
+    }
+    fetchMovies();
+  }, [query]);
+
   return (
     <>
       <NavBar>
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </NavBar>
       <Main>
         <Box>
-          <MovieList movies={movies} />
+          {isLoading && <Loader />}
+          {!isLoading && !error && <MovieList movies={movies} />}
+          {error && <ErrorMessage error={error} />}
         </Box>
         <Box>
           <WatchedSummary watched={watched} />
@@ -83,8 +124,7 @@ function NavBar({ children }) {
 
 }
 
-function Search() {
-  const [query, setQuery] = useState("");
+function Search({ query, setQuery }) {
   return (
     <input
       className="search"
@@ -154,7 +194,7 @@ function Movie({ movie }) {
       <h3>{movie.Title}</h3>
       <div>
         <p>
-          <span>🗓</span>
+          <span>📅</span>
           <span>{movie.Year}</span>
         </p>
       </div>
@@ -223,5 +263,23 @@ function WatchedMovie({ movie }) {
         </p>
       </div>
     </li>
+  )
+}
+
+function Loader() {
+  return (
+    <div className="loader">
+      <span role="img">🍿</span>
+      <span>Loading...</span>
+    </div>
+  )
+}
+
+function ErrorMessage({ error }) {
+  return (
+    <p className="error">
+      <span role="img">⚠️</span>
+      <span>{error}</span>
+    </p>
   )
 }

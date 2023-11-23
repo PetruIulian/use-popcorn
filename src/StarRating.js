@@ -39,6 +39,11 @@ function StarRating({
         color,
         fontSize: `${size}px`,
     }
+    function handleRating(rating) {
+        setRating(rating);
+        onSetRating(rating);
+    }
+
 
     return (
         <div style={containerStyle} className={className}>
@@ -50,6 +55,7 @@ function StarRating({
                         full={tempRating ? tempRating >= i + 1 : rating >= i + 1}
                         onHoverIn={() => setTempRating(i + 1)}
                         onHoverOut={() => setTempRating(0)}
+                        onRate={() => handleRating(i + 1)}
                         color={color}
                         size={size}
                     />))}
@@ -59,16 +65,17 @@ function StarRating({
     )
 }
 
-function Star({ onClick, full, onHoverIn, onHoverOut, color, size }) {
+function Star({ onRate, full, onHoverIn, onHoverOut, color, size }) {
     const starStyle = {
         width: `${size}px`,
         height: `${size}px`,
         display: 'block',
         cursror: 'pointer'
     }
+
     return (
 
-        <span role="button" style={starStyle} onClick={onClick} onMouseEnter={onHoverIn} onMouseLeave={onHoverOut}>
+        <span role="button" style={starStyle} onClick={onRate} onMouseEnter={onHoverIn} onMouseLeave={onHoverOut}>
             {full ? (
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
